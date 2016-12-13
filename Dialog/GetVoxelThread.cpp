@@ -78,6 +78,7 @@ char save_file[MAX_PATH] = { "./data/depth.log" }; //需要和下面的logFilename变量
 string logFilename = "./data/depth.log";
 string graphFilename = "./data/depth.graph";
 string treeFilename = "./data/depth.bt";
+string vrmlFilename;
 string txtFilename;
 
 double res = 0.4; //resolution  
@@ -286,8 +287,29 @@ void GetVoxelThread::GetVoxel(UINT wParam, LONG lParam)
 	//Writing tree files
 	tree->writeBinary(treeFilename);
 
-	//write txt
+	//write wrl
+	vrmlFilename = "./data/depth.bt.wrl";
+	std::ofstream outfile(vrmlFilename.c_str());
+	outfile << "#VRML V2.0 utf8\n#\n";
+	outfile << "# created from OctoMap file " << treeFilename << " with bt2vrml\n";
 
+	size_t count(0);
+	for (OcTree::leaf_iterator it = tree->begin(), end = tree->end(); it != end; ++it) {
+		if (tree->isNodeOccupied(*it)){
+			count++;
+			double size = it.getSize();
+			double tmp1 = it.getX(), tmp2 = it.getY(), tmp3 = it.getZ();
+			outfile << "Transform { translation "    //vrml
+				<< it.getX() << " " << it.getY() << " " << it.getZ()
+				<< " \n  children ["
+				<< " Shape { geometry Box { size "
+				<< size << " " << size << " " << size << "} } ]\n"
+				<< "}\n";
+		}
+	}
+	outfile.close();
+
+	//write txt
 	//txtFilename = treeFilename + itos(count_voxel_file) + ".txt";
 	txtFilename = treeFilename + ".txt";
 
